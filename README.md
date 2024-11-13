@@ -30,7 +30,7 @@ This project aims to develop a system that can detect anomalies in industrial se
 ### Step 1: Data Acquisition and Exploration
 
 1. **Choose a Dataset**:
-   - Option 1: Use the NASA Bearing Dataset (https://ti.arc.nasa.gov/tech/dash/groups/pcoe/prognostic-data-repository/)
+   - Dataset 1: Gas sensor array under dynamic gas mixtures (https://archive.ics.uci.edu/dataset/322/gas+sensor+array+under+dynamic+gas+mixtures)
    - Option 2: Generate simulated data using Python
 
 2. **Load and Explore the Data**:
