@@ -9,7 +9,7 @@ Formatting may be inconsistent from source.
 
 ## Project Overview
 
-This project aims to develop a system that can detect anomalies in industrial sensor readings, which could indicate equipment failure or operational issues. We'll use machine learning techniques to identify unusual patterns in sensor data that deviate from normal operating conditions.
+This project aims to develop a system that can detect anomalies in industrial sensor readings, which could indicate equipment failure or operational issues. We'll use machine learning techniques to identify unusual patterns in sensor data that deviate from normal operating conditions. This includes gas species composition outliers, operating conditions (temperature, pressure, energy changes) over gradients or in localized areas in space
 
 ## Industrial Applications and Value
 
