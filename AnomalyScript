@@ -1,0 +1,143 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import IsolationForest
+from sklearn.svm import OneClassSVM
+from sklearn.metrics import classification_report
+from scipy.io import loadmat
+import seaborn as sns
+
+# Step 1: Data Acquisition and Exploration
+
+def load_nasa_bearing_dataset(file_path):
+    mat = loadmat(file_path)
+    bearing_data = mat['bearing'][0][0]
+    vibration = bearing_data[2].flatten()  # Extract vibration data
+    timestamps = np.arange(len(vibration))
+    return pd.DataFrame({'timestamp': timestamps, 'vibration': vibration})
+
+# Load the NASA bearing dataset
+data = load_nasa_bearing_dataset('bearing_dataset.mat')
+
+# Display basic information
+print(data.info())
+print(data.describe())
+
+# Plot time series of sensor readings
+plt.figure(figsize=(12, 6))
+plt.plot(data['timestamp'], data['vibration'])
+plt.title('Vibration Sensor Readings Over Time')
+plt.xlabel('Timestamp')
+plt.ylabel('Vibration')
+plt.show()
+
+# Preprocess the data
+scaler = StandardScaler()
+data_scaled = scaler.fit_transform(data[['vibration']])
+
+# Step 2: Implement Anomaly Detection Algorithms
+
+# Isolation Forest
+iso_forest = IsolationForest(contamination=0.1, random_state=42)
+iso_forest.fit(data_scaled)
+anomalies_if = iso_forest.predict(data_scaled)
+
+# One-Class SVM
+ocsvm = OneClassSVM(kernel='rbf', nu=0.1)
+ocsvm.fit(data_scaled)
+anomalies_ocsvm = ocsvm.predict(data_scaled)
+
+# Step 3: Evaluate and Compare Models
+
+# For demonstration, we'll assume the last 10% of the data points are anomalies
+true_labels = np.ones(len(data))
+true_labels[-int(len(data)*0.1):] = -1
+
+print("Isolation Forest Performance:")
+print(classification_report(true_labels, anomalies_if))
+
+print("\nOne-Class SVM Performance:")
+print(classification_report(true_labels, anomalies_ocsvm))
+
+# Step 4: Visualize Results
+
+plt.figure(figsize=(12, 6))
+plt.scatter(data['timestamp'], data['vibration'], c=anomalies_if, cmap='viridis')
+plt.title('Anomaly Detection Results (Isolation Forest)')
+plt.xlabel('Timestamp')
+plt.ylabel('Vibration')
+plt.colorbar(label='Anomaly')
+plt.show()
+
+# Step 5: Implement Real-Time Anomaly Detection
+
+def detect_anomaly(new_data):
+    new_data_scaled = scaler.transform(new_data[['vibration']])
+    return iso_forest.predict(new_data_scaled)
+
+# Simulate real-time data
+new_reading = pd.DataFrame({'vibration': [data['vibration'].mean() * 2]})  # Simulating an anomaly
+if detect_anomaly(new_reading) == -1:
+    print("Anomaly detected!")
+else:
+    print("Normal operation")
+
+# Additional Visualizations and Analysis
+
+# Plot the distribution of vibration values
+plt.figure(figsize=(10, 6))
+sns.histplot(data['vibration'], kde=True)
+plt.title('Distribution of Vibration Values')
+plt.xlabel('Vibration')
+plt.ylabel('Frequency')
+plt.show()
+
+# Create a heatmap of correlation between features (if more features are available)
+# For demonstration, we'll create a dummy 'temperature' feature
+data['temperature'] = data['vibration'] * 0.5 + np.random.normal(0, 0.1, len(data))
+correlation_matrix = data[['vibration', 'temperature']].corr()
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap of Features')
+plt.show()
+
+# Time series decomposition (if seasonal patterns are expected)
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+# Ensure the index is a datetime for this example
+data['datetime'] = pd.date_range(start='2021-01-01', periods=len(data), freq='H')
+data.set_index('datetime', inplace=True)
+
+result = seasonal_decompose(data['vibration'], model='additive', period=24)  # Assuming hourly data with daily seasonality
+result.plot()
+plt.tight_layout()
+plt.show()
+
+# Feature Engineering Example: Rolling statistics
+data['rolling_mean'] = data['vibration'].rolling(window=24).mean()
+data['rolling_std'] = data['vibration'].rolling(window=24).std()
+
+plt.figure(figsize=(12, 6))
+plt.plot(data.index, data['vibration'], label='Original')
+plt.plot(data.index, data['rolling_mean'], label='Rolling Mean')
+plt.plot(data.index, data['rolling_std'], label='Rolling Std')
+plt.title('Original Data with Rolling Statistics')
+plt.legend()
+plt.show()
+
+# Implement a simple threshold-based anomaly detection
+threshold = data['vibration'].mean() + 3 * data['vibration'].std()
+data['threshold_anomaly'] = (data['vibration'] > threshold).astype(int)
+
+plt.figure(figsize=(12, 6))
+plt.plot(data.index, data['vibration'])
+plt.axhline(y=threshold, color='r', linestyle='--', label='Threshold')
+plt.scatter(data[data['threshold_anomaly'] == 1].index, 
+            data[data['threshold_anomaly'] == 1]['vibration'], 
+            color='red', label='Anomalies')
+plt.title('Threshold-based Anomaly Detection')
+plt.legend()
+plt.show()
+
+print("Project execution completed.")
